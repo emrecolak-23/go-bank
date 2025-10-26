@@ -2,7 +2,6 @@ package api
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 
 	db "github.com/emrecolak-23/go-bank/db/sqlc"
@@ -34,11 +33,12 @@ func (server *Server) createAccount(context *gin.Context) {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
 			case "foreign_key_violation", "unique_violation":
-				context.JSON(http.StatusForbidden, errorReponse(errok))
-				return 
+				context.JSON(http.StatusForbidden, errorResponse(pqErr))
+				return
 			}
-		context.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+			context.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
 	}
 
 	context.JSON(http.StatusCreated, account)
