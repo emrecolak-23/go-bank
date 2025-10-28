@@ -2,10 +2,12 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
 	db "github.com/emrecolak-23/go-bank/db/sqlc"
+	"github.com/emrecolak-23/go-bank/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,11 +27,23 @@ func (server *Server) createTransfer(context *gin.Context) {
 		return
 	}
 
-	if !server.validAccount(context, req.FromAccountID, req.Currency) {
+	fromAccount, valid := server.validAccount(context, req.FromAccountID, req.Currency)
+
+	authPayload := context.MustGet(authorizationKey).(*token.Payload)
+
+	if fromAccount.Owner != authPayload.Username {
+		err := errors.New("fromaccount doesnt belong to the authenticated user")
+		context.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
-	if !server.validAccount(context, req.ToAccountID, req.Currency) {
+	if !valid {
+		return
+	}
+
+	_, valid = server.validAccount(context, req.ToAccountID, req.Currency)
+
+	if !valid {
 		return
 	}
 
@@ -49,7 +63,7 @@ func (server *Server) createTransfer(context *gin.Context) {
 	context.JSON(http.StatusOK, result)
 }
 
-func (server *Server) validAccount(context *gin.Context, accountId int64, currency string) bool {
+func (server *Server) validAccount(context *gin.Context, accountId int64, currency string) (db.Account, bool) {
 
 	account, err := server.store.GetAccount(context, accountId)
 
@@ -57,20 +71,20 @@ func (server *Server) validAccount(context *gin.Context, accountId int64, curren
 
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, errorResponse(err))
-			return false
+			return account, false
 		}
 
 		context.JSON(http.StatusInternalServerError, errorResponse(err))
 
-		return false
+		return account, false
 	}
 
 	if account.Currency != currency {
 		err := fmt.Errorf("account [%d] curreny mismatch: %s vs %s", accountId, account.Currency, currency)
 		context.JSON(http.StatusBadRequest, errorResponse(err))
-		return false
+		return account, false
 	}
 
-	return true
+	return account, true
 
 }
