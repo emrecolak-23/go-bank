@@ -21,7 +21,7 @@ SELECT * FROM accounts
 WHERE owner = $1
 ORDER BY id
 LIMIT $2
-OFFSET $3;
+OFFSET $3ro;
 
 -- name: UpdateAccount :one
 UPDATE accounts SET balance = $2
