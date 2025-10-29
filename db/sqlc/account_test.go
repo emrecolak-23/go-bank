@@ -80,20 +80,58 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestListAccount(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		CreateRandomAccount(t)
+	user := createRandomUser(t)
+	currencies := []string{"EUR", "USD", "CAD"}
+
+	for _, currency := range currencies {
+		arg := CreateAccountParams{
+			Owner:    user.Username,
+			Balance:  utils.RandomMoney(),
+			Currency: currency,
+		}
+
+		_, err := testQueries.CreateAccount(context.Background(), arg)
+		require.NoError(t, err)
 	}
 
 	arg := ListAccountsParams{
-		Limit:  5,
-		Offset: 5,
+		Owner:  user.Username,
+		Limit:  2,
+		Offset: 0,
 	}
 
 	accounts, err := testQueries.ListAccounts(context.Background(), arg)
 	require.NoError(t, err)
-	require.Len(t, accounts, 5)
+	require.Len(t, accounts, 2)
 
-	for _, account := range accounts {
-		require.NotEmpty(t, account)
+	arg2 := ListAccountsParams{
+		Owner:  user.Username,
+		Limit:  2,
+		Offset: 2,
+	}
+
+	accounts2, err := testQueries.ListAccounts(context.Background(), arg2)
+	require.NoError(t, err)
+	require.Len(t, accounts2, 1)
+
+	arg3 := ListAccountsParams{
+		Owner:  user.Username,
+		Limit:  10,
+		Offset: 0,
+	}
+
+	accounts3, err := testQueries.ListAccounts(context.Background(), arg3)
+	require.NoError(t, err)
+	require.Len(t, accounts3, 3)
+
+	foundCurrencies := make(map[string]bool)
+	for _, account := range accounts3 {
+		require.Equal(t, user.Username, account.Owner)
+		require.False(t, foundCurrencies[account.Currency], "Duplicate currency found")
+		foundCurrencies[account.Currency] = true
+	}
+
+	for _, currency := range currencies {
+		require.True(t, foundCurrencies[currency], "Currency %s not found", currency)
 	}
 }
