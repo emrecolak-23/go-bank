@@ -45,8 +45,11 @@ jobs:
         REPOSITORY: go-simple-bank
         IMAGE_TAG: ${{ github.sha }}
        run: |
-        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t latest .
+        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
         docker push -a $REGISTRY/$REPOSITORY
+
+     - name: Update kube config
+       run: aws eks update-kubeconfig --name test-cluster --region eu-central-1
 
      - name: Deploy Image to Amazon EKS
        run: |
