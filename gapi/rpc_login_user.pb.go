@@ -7,52 +7,14 @@ import (
 	db "github.com/emrecolak-23/go-bank/db/sqlc"
 	"github.com/emrecolak-23/go-bank/pb"
 	"github.com/emrecolak-23/go-bank/utils"
-	"github.com/lib/pq"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	hashedPassword, err := utils.HashPassword(req.Password)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to hash password: %v", err)
-	}
-
-	arg := db.CreateUserParams{
-		Username:       req.Username,
-		FullName:       req.FullName,
-		Email:          req.Email,
-		HashedPassword: hashedPassword,
-	}
-
-	user, err := server.store.CreateUser(ctx, arg)
-	if err != nil {
-		if pqError, ok := err.(*pq.Error); ok {
-			switch pqError.Code.Name() {
-			case "unique_violation":
-				return nil, status.Errorf(codes.AlreadyExists, "username already exists: %v", err)
-			}
-		}
-		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
-	}
-
-	rsp := &pb.CreateUserResponse{
-		User: &pb.User{
-			Username:          user.Username,
-			FullName:          user.FullName,
-			Email:             user.Email,
-			PasswordChangedAt: timestamppb.New(user.PasswordChangedAt),
-			CreatedAt:         timestamppb.New(user.CreatedAt),
-		},
-	}
-
-	return rsp, nil
-}
-
 func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
-	user, err := server.store.GetUser(ctx, req.Username)
+	user, err := server.store.GetUser(ctx, req.GetUsername())
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
@@ -103,13 +65,7 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 	}
 
 	rsp := &pb.LoginUserResponse{
-		User: &pb.User{
-			Username:          user.Username,
-			FullName:          user.FullName,
-			Email:             user.Email,
-			PasswordChangedAt: timestamppb.New(user.PasswordChangedAt),
-			CreatedAt:         timestamppb.New(user.CreatedAt),
-		},
+		User:                  convertUser(user),
 		SessionId:             session.ID.String(),
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
@@ -119,4 +75,3 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 
 	return rsp, nil
 }
-
