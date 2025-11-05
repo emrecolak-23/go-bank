@@ -8,7 +8,6 @@ import (
 	"github.com/emrecolak-23/go-bank/pb"
 	"github.com/emrecolak-23/go-bank/utils"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -38,24 +37,26 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 	}
 
 	// Get user agent and client IP from gRPC metadata
-	md, ok := metadata.FromIncomingContext(ctx)
-	userAgent := ""
-	clientIP := ""
-	if ok {
-		if userAgents := md.Get("user-agent"); len(userAgents) > 0 {
-			userAgent = userAgents[0]
-		}
-		if clientIPs := md.Get("x-forwarded-for"); len(clientIPs) > 0 {
-			clientIP = clientIPs[0]
-		}
-	}
+	// md, ok := metadata.FromIncomingContext(ctx)
+	// userAgent := ""
+	// clientIP := ""
+	// if ok {
+	// 	if userAgents := md.Get("user-agent"); len(userAgents) > 0 {
+	// 		userAgent = userAgents[0]
+	// 	}
+	// 	if clientIPs := md.Get("x-forwarded-for"); len(clientIPs) > 0 {
+	// 		clientIP = clientIPs[0]
+	// 	}
+	// }
+
+	mtdt := server.extractMetadata(ctx)
 
 	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshTokenPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    userAgent,
-		ClientIp:     clientIP,
+		UserAgent:    mtdt.UserAgent,
+		ClientIp:     mtdt.ClientIp,
 		IsBlocked:    false,
 		ExpiresAt:    refreshTokenPayload.ExpiresAt,
 	})
