@@ -13,6 +13,9 @@ import (
 	"github.com/emrecolak-23/go-bank/gapi"
 	"github.com/emrecolak-23/go-bank/pb"
 	"github.com/emrecolak-23/go-bank/utils"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
 	"github.com/rakyll/statik/fs"
@@ -34,9 +37,26 @@ func main() {
 		log.Fatal("can not conntect to db: ", err)
 	}
 
+	runDBMigration(config.MigrationURL, config.DBSource)
+
 	store := db.NewStore(conn)
 	go runGatewayServer(config, store)
 	runGrpcServer(config, store)
+}
+
+func runDBMigration(migrationUrl, dbSource string) {
+	migration, err := migrate.New(migrationUrl, dbSource)
+
+	if err != nil {
+		log.Fatal("can not create new migration instance:", err)
+	}
+
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to run migrate up:", err)
+	}
+
+	log.Println("db migrated successfully")
+
 }
 
 func runGrpcServer(config utils.Config, store db.Store) {
