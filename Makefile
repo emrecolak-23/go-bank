@@ -37,4 +37,6 @@ proto:
 	statik -src=./doc/swagger -dest=./doc
 evans:
 	evans --host localhost --port 9090 -r repl
-.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown db_docs db_schema migratedown1 sqlc test server mockdb proto evanssl
+redis:
+	docker run --name redis -p 6379:6379 -d redis:8-alpine
+.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown db_docs db_schema redis migratedown1 sqlc test server mockdb proto evanssl
