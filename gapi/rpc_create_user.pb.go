@@ -43,6 +43,8 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 
+	// Send verification email to user
+
 	rsp := &pb.CreateUserResponse{
 		User: convertUser(user),
 	}
