@@ -17,7 +17,7 @@ migratedown1:
 sqlc:
 	sqlc generate
 test:
-	go test -v ./...
+	go test -v -short ./...
 server:
 	go run main.go
 mockdb:
