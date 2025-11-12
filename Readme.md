@@ -1,5 +1,18 @@
 # AWS EKS Commands
 
+
+## Create Datavase 
+
+```
+docker exec -it postgres18 psql -U root
+```
+
+## DB Docs 
+```
+dbdocs build doc/db.dbml
+dbdocs password --set secret --project simple_bank
+```
+
 ## Update Kubeconfig
 
 ```bash
