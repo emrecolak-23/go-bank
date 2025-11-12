@@ -55,7 +55,7 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		if pqError, ok := err.(*pq.Error); ok {
 			switch pqError.Code.Name() {
 			case "unique_violation":
-				return nil, status.Errorf(codes.AlreadyExists, "username already exists: %v", err)
+				return nil, status.Errorf(codes.AlreadyExists, "username or email already exists: %v", err)
 			}
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
