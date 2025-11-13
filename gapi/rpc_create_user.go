@@ -10,7 +10,6 @@ import (
 	"github.com/emrecolak-23/go-bank/val"
 	"github.com/emrecolak-23/go-bank/worker"
 	"github.com/hibiken/asynq"
-	"github.com/lib/pq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,11 +51,10 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 
 	txResult, err := server.store.CreateuserTx(ctx, arg)
 	if err != nil {
-		if pqError, ok := err.(*pq.Error); ok {
-			switch pqError.Code.Name() {
-			case "unique_violation":
-				return nil, status.Errorf(codes.AlreadyExists, "username or email already exists: %v", err)
-			}
+		if db.ErrorCode(err) == db.UniqueKeyViolation {
+
+			return nil, status.Errorf(codes.AlreadyExists, err.Error())
+
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}

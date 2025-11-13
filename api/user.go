@@ -9,7 +9,6 @@ import (
 	"github.com/emrecolak-23/go-bank/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 type createUserRequest struct {
@@ -62,11 +61,9 @@ func (server *Server) createUser(context *gin.Context) {
 	user, err := server.store.CreateUser(context, arg)
 
 	if err != nil {
-		if pqError, ok := err.(*pq.Error); ok {
-			switch pqError.Code.Name() {
-			case "unique_violation":
-				context.JSON(http.StatusForbidden, errorResponse(err))
-			}
+		if db.ErrorCode(err) == db.UniqueKeyViolation {
+			context.JSON(http.StatusForbidden, errorResponse(err))
+			return
 		}
 
 		context.JSON(http.StatusInternalServerError, errorResponse(err))
