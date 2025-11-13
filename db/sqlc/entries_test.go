@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ func CreateEntry(t *testing.T) Entry {
 		Amount:    account.Balance,
 	}
 
-	entry, err := testQueries.CreateEntries(context.Background(), arg)
+	entry, err := testStore.CreateEntries(context.Background(), arg)
 	require.NoError(t, err)
 	require.Equal(t, entry.Amount, account.Balance)
 	require.Equal(t, entry.AccountID, account.ID)
@@ -32,7 +31,7 @@ func TestCreateEntry(t *testing.T) {
 func TestGetEntry(t *testing.T) {
 	entry1 := CreateEntry(t)
 
-	entry2, err := testQueries.GetEntry(context.Background(), entry1.ID)
+	entry2, err := testStore.GetEntry(context.Background(), entry1.ID)
 	require.NoError(t, err)
 	require.Equal(t, entry1.ID, entry2.ID)
 	require.Equal(t, entry1.Amount, entry2.Amount)
@@ -42,12 +41,12 @@ func TestGetEntry(t *testing.T) {
 func TestDeleteEntry(t *testing.T) {
 	entry1 := CreateEntry(t)
 
-	err := testQueries.DeleteEntry(context.Background(), entry1.ID)
+	err := testStore.DeleteEntry(context.Background(), entry1.ID)
 	require.NoError(t, err)
 
-	entry2, err := testQueries.GetEntry(context.Background(), entry1.ID)
+	entry2, err := testStore.GetEntry(context.Background(), entry1.ID)
 	require.Error(t, err)
-	require.EqualError(t, err, sql.ErrNoRows.Error())
+	require.ErrorIs(t, err, ErrRecordNotFound)
 	require.Empty(t, entry2)
 
 }
@@ -63,7 +62,7 @@ func TestListEntries(t *testing.T) {
 		Offset: 5,
 	}
 
-	entries, err := testQueries.ListEntries(context.Background(), arg)
+	entries, err := testStore.ListEntries(context.Background(), arg)
 	require.NoError(t, err)
 	require.Len(t, entries, 5)
 
@@ -78,7 +77,7 @@ func TestUpdateEntry(t *testing.T) {
 		Amount: 10,
 	}
 
-	entry2, err := testQueries.UpdateEntry(context.Background(), arg)
+	entry2, err := testStore.UpdateEntry(context.Background(), arg)
 	require.NoError(t, err)
 	require.Equal(t, entry1.ID, entry2.ID)
 	require.NotEqual(t, entry1.Amount, entry2.Amount)

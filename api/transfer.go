@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -69,7 +68,7 @@ func (server *Server) validAccount(context *gin.Context, accountId int64, curren
 
 	if err != nil {
 
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			context.JSON(http.StatusNotFound, errorResponse(err))
 			return account, false
 		}

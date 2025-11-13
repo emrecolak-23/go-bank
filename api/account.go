@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
@@ -63,7 +62,7 @@ func (server *Server) getAccount(contex *gin.Context) {
 	account, err := server.store.GetAccount(contex, req.ID)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			contex.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}

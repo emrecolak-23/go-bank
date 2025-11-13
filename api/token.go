@@ -1,11 +1,12 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	db "github.com/emrecolak-23/go-bank/db/sqlc"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +36,7 @@ func (server *Server) renewAccessToken(context *gin.Context) {
 	session, err := server.store.GetSession(context, refreshPayload.ID)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			context.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
