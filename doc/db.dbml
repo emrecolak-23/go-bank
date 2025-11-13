@@ -15,6 +15,7 @@ Table sessions as S {
 
 Table users as U {
   username varchar [pk]
+  role varchar [not null, default: 'depositor']
   hashed_password varchar [not null]
   full_name varchar [not null]
   email varchar [unique, not null]

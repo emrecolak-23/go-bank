@@ -53,7 +53,7 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 	if err != nil {
 		if db.ErrorCode(err) == db.UniqueKeyViolation {
 
-			return nil, status.Errorf(codes.AlreadyExists, err.Error())
+			return nil, status.Errorf(codes.AlreadyExists, "%v", err.Error())
 
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)

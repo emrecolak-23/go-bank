@@ -14,15 +14,17 @@ func TestPasetoMaker(t *testing.T) {
 	require.NoError(t, err)
 
 	username := utils.RandomOwner()
+	role := utils.DepositorRole
 	duration := time.Minute
 
 	issuedAt := time.Now()
 	expiredAt := issuedAt.Add(duration)
 
-	token, payload, err := maker.CreateToken(username, duration)
+	token, payload, err := maker.CreateToken(username, role, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	require.NotEmpty(t, payload)
+	require.Equal(t, role, payload.Role)
 
 	payload, err = maker.VerifyToken(token)
 	require.NoError(t, err)
